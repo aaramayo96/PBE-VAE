@@ -1,0 +1,47 @@
+# PBE-VAE: Probability Based Expert Variational Autoencoder
+# Ultra-Fast Compact Model Architecture Definition (Nano)
+
+name: "pbe_vae_nano"
+version: "v1.0"
+
+# Parameters
+latent_dim: 4                  # Latent representation bottleneck dimension
+reconstruction_loss_weight: 10.0 # MSE spectral reconstruction loss weight
+kld_loss_weight: 0.0001        # KL divergence regularization weight
+prior_loss_weight: 5.0         # BCE physics-guided prior loss weight
+sparsity_loss_weight: 1.0      # Band retention penalty weight
+min_bands_loss_weight: 50.0    # Minimum active band constraint penalty
+min_bands_threshold: 16.0      # Minimum active spectral bands
+lr: 0.001                      # Adam optimizer learning rate
+clip_grad_norm: 1.0            # Gradient clipping max norm
+
+# Expert Prior Gate
+gate:
+  # [from, number, module, args]
+  - [-1, 1, ExpertGate, [0.5, 4, 3.0, 0.05]] # [temp, reduction_ratio, scale_init, min_gate_threshold]
+
+# Encoder (Backbone)
+encoder:
+  # [from, number, module, args]
+  - [-1, 1, Linear, [32]]
+  - [-1, 1, LeakyReLU, [0.2]]
+  - [-1, 1, BatchNorm1d, [32]]
+  - [-1, 1, Linear, [16]]
+  - [-1, 1, LeakyReLU, [0.2]]
+
+# Latent Projection Layer
+latent:
+  # [from, number, module, args]
+  - [-1, 1, Linear, [latent_dim]] # fc_mu
+  - [-2, 1, Linear, [latent_dim]] # fc_logvar
+
+# Decoder (Head)
+decoder:
+  # [from, number, module, args]
+  - [-1, 1, Linear, [16]]
+  - [-1, 1, LeakyReLU, [0.2]]
+  - [-1, 1, BatchNorm1d, [16]]
+  - [-1, 1, Linear, [32]]
+  - [-1, 1, LeakyReLU, [0.2]]
+  - [-1, 1, Linear, [input_dim]]
+

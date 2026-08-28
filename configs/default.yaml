@@ -1,0 +1,67 @@
+# configs/default.yaml
+
+rois:
+  - name: "Site_Alpha"
+    lat: 33.2142
+    lon: -111.049445
+
+
+model: "configs/models/pbe_vae_standard.yaml"
+
+classifier:
+  model: "gradient_boosting" # Options: gradient_boosting, hist_gradient_boosting, random_forest, xgboost, lightgbm
+  n_estimators: 300          # Number of boosting trees / estimators
+  learning_rate: 0.05        # Step size shrinkage
+  max_depth: 4               # Maximum tree depth
+  subsample: 0.8             # Row subsampling ratio
+  min_samples_leaf: 5        # Minimum samples required in leaf nodes
+  calibration: "isotonic"    # Probability calibration: "isotonic", "sigmoid", or null
+
+processing:
+  roi_radius_pixels: 20     # Distance from center point in pixels (40 px = ~200m at 5m/px)
+  target_crs: "EPSG:32611"  # UTM Zone for Arizona/AVIRIS
+  latent_dim: 5             # Dimensionality of the VAE latent bottleneck vector z (e.g. 5D latent space)
+  n_clusters: 4            # Number of geological deposit subclasses clustered in the latent space
+  probability_method: "gmm" # Latent soft-probability method: "gmm", "softmax", "rbf", "student_t", "cosine"
+  # Physical spectral model input. Atmospheric water-absorption ranges are
+  # excluded before the Expert Gate learns its data-driven band weights.
+  vnir_range: [0.38, 1.20]
+  swir_range: [2.00, 2.50]
+  excluded_wavelength_ranges:
+    - [1.30, 1.50]
+    - [1.75, 2.00]
+  # Used only for a one-cluster GMM, where normal GMM membership is always 1.0.
+  # sigmoid maps standardized log-density to [0, 1]; exp_density scores relative to peak density.
+  single_cluster_activation: "sigmoid" # "sigmoid" or "exp_density"
+  single_cluster_temperature: 1.0       # Higher values soften the activation response
+  single_cluster_offset: 0.0            # Positive values require denser matches
+  curvature_threshold: 3.37 # Dominance threshold: Curvature Ratio >= 3.37 triggers SWIR Dominance, else VNIR Dominance
+  use_dem: true             # Set to false to train & predict purely on spectral data
+  # DEM is external to the VAE and cannot create a detection by itself.  Its
+  # weight is the maximum attenuation of a spectrally plausible score.
+  dem_weight: 0.25
+  dem_integration: "spectral_gate"
+  dem_similarity_width: 1.0 # Target-ROI DEM standard deviations for a close match
+  # Match the HSC master pipeline defaults; values are applied during classifier fitting.
+  background_sample_ratio: 1.0
+  background_max_pixels: 50000
+  background_max_flightlines: 40
+  background_negative_weight: 0.5
+
+discovery:
+  conf_threshold: 0.85          # Probability cutoff for target candidate classification
+  min_cluster_pixels: 1000       # Minimum contiguous cluster size to form a deposit body
+  max_cluster_pixels: 50000     # Maximum cluster size to filter out broad saturated surfaces
+  opening_kernel: 21            # Morphological noise-removal kernel dimension (11x11)
+  min_mean_probability: 0.95    # Mean calibrated probability required across a candidate blob
+  min_compactness: 0.05         # Reject thin or stringy connected components; 0 disables it
+  candidate_sort: "max_prob"    # "max_prob" or "mean_prob"
+  dedup_radius_pixels: 0       # Exclusion radius around known training ROIs
+  max_candidates_per_tile: 50   # Maximum ranked candidate sites saved per flightline     
+
+paths:
+  base_dir: 
+    - "/Volumes/PortableSSD/ADEQ/AVIRIS"
+    - "/Volumes/Untitled/ADEQ"
+  out_dir: "/Volumes/Untitled/ADEQ/qgis_clustering_out"
+  dem_path: "/Volumes/Untitled/ADEQ/DEM/10m_usgs_dem_arizona.tif"

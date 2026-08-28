@@ -1,0 +1,53 @@
+# PBE-VAE: Probability Based Expert Variational Autoencoder
+# High-Capacity Deep Model Architecture Definition (Deep)
+
+name: "pbe_vae_deep"
+version: "v1.0"
+
+# Parameters
+latent_dim: 8                  # Latent representation bottleneck dimension
+reconstruction_loss_weight: 12.0 # MSE spectral reconstruction loss weight
+kld_loss_weight: 0.0002        # KL divergence regularization weight
+prior_loss_weight: 6.0         # BCE physics-guided prior loss weight
+sparsity_loss_weight: 1.5      # Band retention penalty weight
+min_bands_loss_weight: 60.0    # Minimum active band constraint penalty
+min_bands_threshold: 24.0      # Minimum active spectral bands
+lr: 0.0008                     # Adam optimizer learning rate
+clip_grad_norm: 1.0            # Gradient clipping max norm
+
+# Expert Prior Gate
+gate:
+  # [from, number, module, args]
+  - [-1, 1, ExpertGate, [0.4, 2, 3.5, 0.05]] # [temp, reduction_ratio, scale_init, min_gate_threshold]
+
+# Encoder (Backbone)
+encoder:
+  # [from, number, module, args]
+  - [-1, 1, Linear, [128]]
+  - [-1, 1, LeakyReLU, [0.2]]
+  - [-1, 1, BatchNorm1d, [128]]
+  - [-1, 1, Linear, [64]]
+  - [-1, 1, LeakyReLU, [0.2]]
+  - [-1, 1, BatchNorm1d, [64]]
+  - [-1, 1, Linear, [32]]
+  - [-1, 1, LeakyReLU, [0.2]]
+
+# Latent Projection Layer
+latent:
+  # [from, number, module, args]
+  - [-1, 1, Linear, [latent_dim]] # fc_mu
+  - [-2, 1, Linear, [latent_dim]] # fc_logvar
+
+# Decoder (Head)
+decoder:
+  # [from, number, module, args]
+  - [-1, 1, Linear, [32]]
+  - [-1, 1, LeakyReLU, [0.2]]
+  - [-1, 1, BatchNorm1d, [32]]
+  - [-1, 1, Linear, [64]]
+  - [-1, 1, LeakyReLU, [0.2]]
+  - [-1, 1, BatchNorm1d, [64]]
+  - [-1, 1, Linear, [128]]
+  - [-1, 1, LeakyReLU, [0.2]]
+  - [-1, 1, Linear, [input_dim]]
+
