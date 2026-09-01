@@ -1,0 +1,225 @@
+# configs/aml_standard_detected_roi.yaml
+#
+# AML-style Arizona experiment:
+# - training/input ROIs use the parent pipeline's 100 m radius
+# - detected candidate ROIs are exported as fixed 200x200 px proposal windows
+
+rois:
+  - name: Site_Alpha
+    lat: 33.2142
+    lon: -111.049445
+  - name: Site_Beta
+    lat: 33.214297
+    lon: -111.047895
+  - name: Site_05
+    lat: 33.21528667
+    lon: -111.04841
+  - name: Site_06
+    lat: 33.21409
+    lon: -111.0541633
+  - name: Site_07
+    lat: 33.21265333
+    lon: -111.055885
+  - name: Site_08
+    lat: 33.21243
+    lon: -111.054495
+  - name: Site_16
+    lat: 33.325818
+    lon: -111.052961
+  - name: Site_18
+    lat: 31.471125
+    lon: -110.730908
+  - name: Site_19
+    lat: 31.470401
+    lon: -110.732429
+  - name: Site_20
+    lat: 31.480493
+    lon: -110.738811
+  - name: Site_21
+    lat: 31.481156
+    lon: -110.737053
+  - name: Site_23
+    lat: 31.479262
+    lon: -110.738662
+  - name: 23N-20W-12-002 (MK9-B)
+    lat: 35.38925
+    lon: -114.36091666666665
+  - name: 23N-18W-02-042 (Last site Section 2 Prospect)
+    lat: 34.405277777777776
+    lon: -114.16638888888889
+  - name: 23n-18W-13-015
+    lat: 35.37
+    lon: -113.86222222222221
+  - name: 23n-17w-32-017
+    lat: 35.331388888888895
+    lon: -114.11527777777778
+  - name: 23N-16W-11-002 (Gerome Carrow MK165B)
+    lat: 35.54597222222222
+    lon: -113.94772222222223
+  - name: 23n-18W-02-017 (New Jersey Adit 2)
+    lat: 35.46805555555555
+    lon: -114.17083333333333
+  - name: 23N-18W-16-002 (MK1-B)
+    lat: 35.38136111111111
+    lon: -114.20175
+  - name: 23N-16W-11-001 (Gerome Carrow 165A)
+    lat: 35.39597222222222
+    lon: -113.94787222222223
+  - name: 23n-17w-18-007
+    lat: 35.38472222222222
+    lon: -114.13333333333334
+  - name: 23n-18W-24-003 (Whitehorse)
+    lat: 35.328611111111115
+    lon: -114.18305555555555
+  - name: 23n-18W-02-019
+    lat: 35.42333333333333
+    lon: -114.17916666666667
+  - name: 23n-18W-05-004
+    lat: 35.41861111111111
+    lon: -114.22472222222223
+  - name: 23n-18W-23-001
+    lat: 35.361666666666665
+    lon: -114.16805555555555
+  - name: 23n-18W-11-021 (Jupiter Mine)
+    lat: 35.39527777777778
+    lon: -114.17083333333333
+  - name: 23n-17w-30-001
+    lat: 35.35611111111111
+    lon: -114.13222222222221
+  - name: 23n-18W-36-001 (Black Pipe)
+    lat: 35.33363888888889
+    lon: -114.15047222222223
+  - name: 23n-18W-01-002 (Lucky boy Mine)
+    lat: 35.41444444444444
+    lon: -114.14944444444446
+  - name: 23n-18W-04-003
+    lat: 35.40611111111111
+    lon: -114.20111111111112
+  - name: 23n-18W-02-025
+    lat: 35.44555555555555
+    lon: -114.17916666666667
+  - name: 23n-17w-30-006
+    lat: 35.35333333333333
+    lon: -114.10666666666665
+  - name: 23n-18W-22-002 (Emerald Isle Mine)
+    lat: 35.362500000000004
+    lon: -114.19111111111111
+  - name: 23n-18W-13-010
+    lat: 35.376666666666665
+    lon: -114.1538888888889
+  - name: 23n-17w-33-003
+    lat: 35.33222222222223
+    lon: -114.09305555555555
+  - name: 23n-18W-14-016
+    lat: 35.376666666666665
+    lon: -114.17972222222222
+  - name: 23n-18W-12-001
+    lat: 35.39861111111111
+    lon: -114.15
+  - name: 23N-18W-02-035 (New Deal Adit B)
+    lat: 35.41025
+    lon: -114.1705
+  - name: 23n-18W-05-001
+    lat: 35.40472222222222
+    lon: -114.21916666666667
+  - name: 23N-18W-10-037 (MK2-C)
+    lat: 35.3905
+    lon: -114.18783333333333
+  - name: 23n-17w-31-005 (Jamison Mine)
+    lat: 35.33583333333333
+    lon: -114.13305555555554
+  - name: 23n-18W-02-024 (North Georgia)
+    lat: 34.414899999999996
+    lon: -114.17774722222222
+  - name: 23n-18W-26-002
+    lat: 35.3525
+    lon: -114.17944444444444
+  - name: 23N-18W-03-018 (MK1-B)
+    lat: 35.40519444444444
+    lon: -114.1853888888889
+  - name: 23n-18W-03-003
+    lat: 35.43333333333333
+    lon: -114.18833333333333
+  - name: 23n-17w-32-004
+    lat: 35.343611111111116
+    lon: -114.11833333333333
+  - name: 23n-17w-19-001 (MK3-A)
+    lat: 35.36836111111111
+    lon: -114.13127777777777
+  - name: 23n-17w-20-001
+    lat: 35.36388888888889
+    lon: -114.11416666666666
+  - name: 23n-18W-14-012
+    lat: 35.38333333333333
+    lon: -114.1675
+  - name: 23n-18W-26-001
+    lat: 35.338055555555556
+    lon: -114.17527777777778
+
+model: "configs/models/pbe_vae_standard.yaml"
+
+classifier:
+  model: "hist_gradient_boosting"
+  n_estimators: 200
+  learning_rate: 0.05
+  max_depth: 4
+  subsample: 0.8
+  min_samples_leaf: 5
+  calibration: "isotonic"
+  max_cv_splits: 5
+
+training:
+  epochs: 100
+  batch_size: 4096
+
+processing:
+  roi_radius_meters: 100
+  target_crs: "EPSG:32611"
+  latent_dim: 5
+  n_clusters: 20
+  probability_method: "gmm"
+  vnir_range: [0.38, 1.20]
+  swir_range: [2.00, 2.50]
+  excluded_wavelength_ranges:
+    - [1.30, 1.50]
+    - [1.75, 2.00]
+  single_cluster_activation: "sigmoid"
+  single_cluster_temperature: 1.0
+  single_cluster_offset: 0.0
+  curvature_threshold: 4.5
+  use_dem: true
+  dem_weight: 0.75
+  dem_weight_ratio: 0.75
+  dem_integration: "spectral_gate"
+  dem_similarity_width: 1.0
+  background_sample_ratio: 1.0
+  background_max_pixels: 50000
+  background_max_flightlines: 40
+  background_negative_weight: 0.5
+
+discovery:
+  conf_threshold: 0.75
+  probability_tiers: [0.75, 0.80, 0.90, 0.95]
+  min_cluster_pixels: 500
+  max_cluster_pixels: 50000
+  opening_kernel: 11
+  min_mean_probability: 0.75
+  min_compactness: 0.03
+  candidate_sort: "max_prob"
+  dedup_radius_pixels: 80
+  max_candidates_per_tile: 2000
+  detected_roi_size_pixels: [200, 200]
+  roi_window_max_multiple: 5
+  min_roi_coverage: 0.01
+  save_individual_reports: false
+
+runtime:
+  prediction_workers: 4
+  prediction_device: "cpu"
+  threads_per_worker: 1
+
+paths:
+  base_dir:
+    - "/Volumes/HSC/ARIZONA_FULL/flightlines"
+  out_dir: "/Users/hsc/Documents/ARIZONA_HS/pbe_vae_aml_standard_detected_roi"
+  dem_path: "/Volumes/HSC/ARIZONA_FULL/DEM/10m_usgs_dem_arizona.tif"

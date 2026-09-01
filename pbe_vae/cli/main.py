@@ -22,6 +22,8 @@ def main():
     # 1. harvest command
     harvest_parser = subparsers.add_parser("harvest", help="Harvest ROI cubes and build dataset")
     harvest_parser.add_argument("--out-dir", type=str, default=None, help="Output directory")
+    harvest_parser.add_argument("--roi-radius-pixels", type=int, default=None, help="Input ROI radius in pixels")
+    harvest_parser.add_argument("--roi-radius-meters", type=float, default=None, help="Input ROI radius in meters")
     
     # 2. cluster command
     cluster_parser = subparsers.add_parser("cluster", help="Train PGE-VAE and latent space clustering models")
@@ -36,6 +38,16 @@ def main():
     predict_parser = subparsers.add_parser("predict", help="Run pixel-level inference across flight lines")
     predict_parser.add_argument("--weights", type=str, default=None, help="Path to trained_model.pkl")
     predict_parser.add_argument("--out-dir", type=str, default=None, help="Output directory")
+    predict_parser.add_argument(
+        "--detected-roi-size-pixels",
+        type=int,
+        nargs="+",
+        default=None,
+        metavar="PX",
+        help="Standard detected ROI proposal size in pixels; pass one value for square or two for H W",
+    )
+    predict_parser.add_argument("--roi-window-max-multiple", type=int, default=None, help="Maximum multiple of the detected ROI proposal size")
+    predict_parser.add_argument("--min-roi-coverage", type=float, default=None, help="Minimum detected-pixel coverage inside the proposal ROI")
 
     # 5. mosaic command
     mosaic_parser = subparsers.add_parser("mosaic", help="Reproject and mosaic probability GeoTIFFs")
@@ -59,13 +71,25 @@ def main():
     detector = PBEVAE(model=args.config, weights=getattr(args, 'weights', None))
 
     if args.command == "harvest":
-        detector.harvest(output_dir=args.out_dir)
+        detector.harvest(
+            output_dir=args.out_dir,
+            roi_radius_pixels=args.roi_radius_pixels,
+            roi_radius_meters=args.roi_radius_meters,
+        )
     elif args.command == "cluster":
         detector.cluster(n_clusters=args.n_clusters, output_dir=args.out_dir)
     elif args.command == "train":
         detector.train(out_dir=args.out_dir)
     elif args.command == "predict":
-        detector.predict(out_dir=args.out_dir)
+        detected_roi_size = args.detected_roi_size_pixels
+        if detected_roi_size is not None and len(detected_roi_size) == 1:
+            detected_roi_size = detected_roi_size[0]
+        detector.predict(
+            out_dir=args.out_dir,
+            detected_roi_size_pixels=detected_roi_size,
+            roi_window_max_multiple=args.roi_window_max_multiple,
+            min_roi_coverage=args.min_roi_coverage,
+        )
     elif args.command == "mosaic":
         detector.mosaic(source=args.prob_dir, out_dir=args.out_dir, shp_path=args.shp)
     elif args.command == "annotate":

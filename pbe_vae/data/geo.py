@@ -59,9 +59,13 @@ def find_aviris_files(base_dirs: Union[str, List[str], Path]) -> List[Tuple[str,
             if not refl_dat.exists():
                 refl_dat = refl_hdr.with_suffix(".dat")
                 if not refl_dat.exists():
-                    refl_dat = refl_hdr.with_suffix(".img")
+                    refl_dat = refl_hdr.with_suffix(".bin")
                     if not refl_dat.exists():
-                        continue
+                        refl_dat = refl_hdr.with_suffix(".img")
+                        if not refl_dat.exists():
+                            refl_dat = refl_hdr.with_suffix(".raw")
+                            if not refl_dat.exists():
+                                continue
             key = refl_hdr.stem.replace("_rfl", "").replace("_pol_ref", "").replace("_ref", "")
             if key not in seen_keys:
                 seen_keys.add(key)

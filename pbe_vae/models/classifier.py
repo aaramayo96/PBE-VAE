@@ -528,8 +528,15 @@ class PBEVAEClassifier:
             splits = list(skf.split(X_scaled, target_flag))
             print(f"[+] Performing Stratified K-Fold CV ({n_splits} folds) with {c_type}...")
 
+        max_cv_splits = c_cfg.get("max_cv_splits")
+        if max_cv_splits is not None and len(splits) > int(max_cv_splits):
+            keep_idx = np.linspace(0, len(splits) - 1, int(max_cv_splits), dtype=int)
+            splits = [splits[i] for i in keep_idx]
+            print(f"[+] Capping classifier CV to {len(splits)} representative split(s).", flush=True)
+
         y_true_bin, y_prob_all = [], []
-        for train_idx, test_idx in splits:
+        for fold_idx, (train_idx, test_idx) in enumerate(splits, 1):
+            print(f"[+] Classifier CV fold {fold_idx}/{len(splits)}...", flush=True)
             fold_clf = build_base_classifier(c_type, c_cfg)
             y_train = target_flag[train_idx]
             y_test = target_flag[test_idx]

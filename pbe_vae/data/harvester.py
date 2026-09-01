@@ -315,6 +315,8 @@ def harvest_rois(
         roi_radius_meters=radius_m,
         pixel_size_meters=pixel_size_m,
         target_crs=crs,
+        source_file_count=len(files),
+        intersecting_flightline_count=len(active_flightline_jobs),
     )
 
     print(
@@ -333,4 +335,6 @@ def harvest_rois(
         "roi_radius_meters": radius_m,
         "pixel_size_meters": pixel_size_m,
         "target_crs": crs,
+        "source_file_count": len(files),
+        "intersecting_flightline_count": len(active_flightline_jobs),
     }
