@@ -1,0 +1,10 @@
+[+] Source dirs: ['/Volumes/HSC/ARIZONA_FULL/flightlines']
+[+] Found 179 AVIRIS flightlines
+[+] Averaged 4 gypsum spectra
+[+] Selected bands: 137 of 224
+[+] Target signature: /Users/hsc/Documents/ARIZONA_HS/PBE-VAE/benchmark_results/gypsum_library_map/gypsum_average_selected_band_signature.npy
+[+] ACE: 171 pending, 8 skipped existing, workers=1
+Running ACE detector:   0%|          | 0/171 [00:00<?, ?it/s]/opt/miniconda3/envs/arizona_hs/lib/python3.10/site-packages/osgeo/gdal.py:311: FutureWarning: Neither gdal.UseExceptions() nor gdal.DontUseExceptions() has been explicitly called. In GDAL 4.0, exceptions will be enabled by default.
+  warnings.warn(
+Running ACE detector:   1%|          | 1/171 [12:22<35:02:41, 742.13s/it]Running ACE detector:   1%|          | 2/171 [25:17<35:45:30, 761.72s/it]Running ACE detector:   2%|▏         | 3/171 [36:25<33:33:06, 718.96s/it]Running ACE detector:   2%|▏         | 4/171 [51:20<36:33:58, 788.25s/it]Running ACE detector:   3%|▎         | 5/171 [1:06:28<38:20:32, 831.52s/it]Running ACE detector:   4%|▎         | 6/171 [1:09:16<27:46:10, 605.88s/it]Running ACE detector:   4%|▍         | 7/171 [1:12:01<21:02:28, 461.88s/it]Running ACE detector:   5%|▍         | 8/171 [1:12:23<14:34:16, 321.82s/it]Running ACE detector:   5%|▌         | 9/171 [1:14:16<11:32:34, 256.51s/it]Running ACE detector:   6%|▌         | 10/171 [1:16:09<9:29:18, 212.17s/it]Running ACE detector:   6%|▋         | 11/171 [1:18:10<8:11:15, 184.22s/it]Running ACE detector:   7%|▋         | 12/171 [1:32:57<17:34:37, 397.97s/it]Running ACE detector:   8%|▊         | 13/171 [1:35:39<14:19:56, 326.56s/it]Running ACE detector:   8%|▊         | 14/171 [1:37:45<11:36:14, 266.08s/it]Running ACE detector:   9%|▉         | 15/171 [1:39:58<9:47:41, 226.04s/it] /opt/miniconda3/envs/arizona_hs/lib/python3.10/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
