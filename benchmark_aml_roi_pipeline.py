@@ -58,6 +58,7 @@ OUTPUT_DIR = PREFERRED_OUTPUT_DIR if PREFERRED_OUTPUT_DIR.parent.exists() else F
 # -----------------------------------------------------------------------------
 FORCE_HARVEST = False              # Re-harvest spatial ROI cubes from flightlines
 PREDICT_ONLY = False               # Skip training; reuse existing trained_model.pkl
+REUSE_INFERENCE = False            # Skip inference; reuse cached flightline detections from _parallel_prediction
 SKIP_MOSAIC = False                # Skip final probability mosaic assembly
 PREDICTION_WORKERS = 4             # Parallel subprocesses for flightline inference
 PREDICTION_DEVICE = "cpu"          # "cpu", "cuda", or "mps"
@@ -363,6 +364,69 @@ def predict_one_flightline(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def load_cached_parallel_detections(output_dir: Path) -> list[dict[str, Any]]:
+    """Load previously predicted flightline candidate detections from worker cache."""
+    worker_root = output_dir / "_parallel_prediction"
+    cand_csvs = sorted(list(worker_root.glob("*/new_roi_candidates.csv")))
+    all_candidates: list[dict[str, Any]] = []
+    for c_csv in cand_csvs:
+        g_json = c_csv.parent / "new_roi_candidates.geojson"
+        polys = {}
+        if g_json.exists():
+            try:
+                with open(g_json) as f:
+                    gj = json.load(f)
+                    for feat in gj.get("features", []):
+                        rnk = feat.get("properties", {}).get("rank")
+                        geom = feat.get("geometry", {})
+                        if geom.get("type") == "Polygon":
+                            polys[rnk] = geom.get("coordinates", [[]])[0]
+            except Exception:
+                pass
+
+        with open(c_csv, newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                rnk = int(row.get("rank", 1))
+                cand = {
+                    "rank": rnk,
+                    "flight_line": row["flight_line"],
+                    "lat": float(row["lat"]),
+                    "lon": float(row["lon"]),
+                    "row_c": int(row.get("row_c", 0)),
+                    "col_c": int(row.get("col_c", 0)),
+                    "blob_pixels": int(row.get("blob_pixels", 0)),
+                    "n_pixels": int(row.get("blob_pixels", 0)),
+                    "component_area_m2": float(row.get("component_area_m2", 0.0)),
+                    "roi_height_px": int(row.get("roi_height_px", 0)),
+                    "roi_width_px": int(row.get("roi_width_px", 0)),
+                    "roi_multiple": int(row.get("roi_multiple", 1)),
+                    "roi_area_m2": float(row.get("roi_area_m2", 0.0)),
+                    "mean_prob": float(row.get("mean_prob", 0.0)),
+                    "max_prob": float(row.get("max_prob", 0.0)),
+                    "roi_coverage": float(row.get("roi_coverage", 0.0)),
+                    "roi_detected_px": int(row.get("roi_detected_px", 0)),
+                    "roi_valid_px": int(row.get("roi_valid_px", 0)),
+                    "bbox": (
+                        int(row.get("bbox_r0", 0)),
+                        int(row.get("bbox_c0", 0)),
+                        int(row.get("bbox_r1", 0)),
+                        int(row.get("bbox_c1", 0)),
+                    ),
+                    "component_bbox": (
+                        int(row.get("component_bbox_r0", row.get("bbox_r0", 0))),
+                        int(row.get("component_bbox_c0", row.get("bbox_c0", 0))),
+                        int(row.get("component_bbox_r1", row.get("bbox_r1", 0))),
+                        int(row.get("component_bbox_c1", row.get("bbox_c1", 0))),
+                    ),
+                    "validation_score": float(row.get("validation_score", 0.0)),
+                    "roi_polygon_lonlat": polys.get(rnk, []),
+                }
+                all_candidates.append(cand)
+    print(f"[+] Loaded {len(all_candidates)} cached candidate proposals from {len(cand_csvs)} flightlines.")
+    return all_candidates
+
+
 def predict_parallel(
     *,
     config_path: Path,
@@ -612,69 +676,32 @@ def run_experiment_2() -> Dict[str, Any]:
             dem_weight=model.dem_weight,
         )
 
-    # -------------------------------------------------------------------------
-    # Stage 2: Parallel Flightline Prediction (Pass 1)
-    # -------------------------------------------------------------------------
-    predict_kwargs = {
-        "conf": CONF_THRESHOLD,
-        "min_cluster_pixels": MIN_CLUSTER_PIXELS,
-        "max_cluster_pixels": MAX_CLUSTER_PIXELS,
-        "opening_kernel": OPENING_KERNEL,
-        "min_mean_probability": MIN_MEAN_PROBABILITY,
-        "min_compactness": MIN_COMPACTNESS,
-        "candidate_sort": CANDIDATE_SORT,
-        "dedup_radius": DEDUP_RADIUS_PIXELS,
-        "max_candidates": MAX_CANDIDATES_PER_TILE,
-        "detected_roi_size_pixels": DETECTED_ROI_SIZE_PIXELS,
-        "roi_window_max_multiple": ROI_WINDOW_MAX_MULTIPLE,
-        "min_roi_coverage": MIN_ROI_COVERAGE,
-        "save": True,
-        "use_dem": model.use_dem,
-        "dem_weight": model.dem_weight,
-    }
-
-    print("\n[Stage 3/4] Running Flightline Target Inference...")
-    if PREDICTION_WORKERS > 1:
-        detections = predict_parallel(
-            config_path=CONFIG_FILE,
-            weights_path=weights_path,
-            cfg=cfg,
-            output_dir=output_dir,
-            workers=PREDICTION_WORKERS,
-            predict_kwargs=predict_kwargs,
-            runtime_cfg=cfg.get("runtime", {}),
-        )
+    if REUSE_INFERENCE:
+        print("\n[+] REUSE_INFERENCE is enabled: loading cached flightline detections...")
+        detections = load_cached_parallel_detections(output_dir)
     else:
-        detections = model.predict(
-            source=cfg["paths"]["base_dir"],
-            output_dir=output_dir,
-            **predict_kwargs,
-        )
+        # -------------------------------------------------------------------------
+        # Stage 2: Parallel Flightline Prediction (Pass 1)
+        # -------------------------------------------------------------------------
+        predict_kwargs = {
+            "conf": CONF_THRESHOLD,
+            "min_cluster_pixels": MIN_CLUSTER_PIXELS,
+            "max_cluster_pixels": MAX_CLUSTER_PIXELS,
+            "opening_kernel": OPENING_KERNEL,
+            "min_mean_probability": MIN_MEAN_PROBABILITY,
+            "min_compactness": MIN_COMPACTNESS,
+            "candidate_sort": CANDIDATE_SORT,
+            "dedup_radius": DEDUP_RADIUS_PIXELS,
+            "max_candidates": MAX_CANDIDATES_PER_TILE,
+            "detected_roi_size_pixels": DETECTED_ROI_SIZE_PIXELS,
+            "roi_window_max_multiple": ROI_WINDOW_MAX_MULTIPLE,
+            "min_roi_coverage": MIN_ROI_COVERAGE,
+            "save": True,
+            "use_dem": model.use_dem,
+            "dem_weight": model.dem_weight,
+        }
 
-    # -------------------------------------------------------------------------
-    # Stage 3 (Optional): Hard Negative Mining (Pass 2)
-    # -------------------------------------------------------------------------
-    if ENABLE_HARD_NEGATIVE_MINING and not PREDICT_ONLY:
-        print("\n" + "=" * 60)
-        print("⛏️  HARD NEGATIVE MINING (Pass 2 Retraining)")
-        print("=" * 60)
-        print(f"    Mining threshold : P >= {HNM_MIN_CONFIDENCE:.2f}")
-        print(f"    Exclusion buffer : {HNM_EXCLUSION_RADIUS_METERS:.0f} m from known ROIs")
-        print(f"    Negative weight  : {HNM_NEGATIVE_WEIGHT:.2f}")
-
-        # Retrain classifier with higher negative weighting
-        model.cfg["processing"]["background_negative_weight"] = HNM_NEGATIVE_WEIGHT
-        model.fit_classifier(
-            output_dir=output_dir,
-            data_path=harvest_file,
-            classifier=model.classifier_type,
-            calibration="isotonic",
-            use_dem=model.use_dem,
-            dem_weight=model.dem_weight,
-        )
-
-        # Re-run inference with hardened model
-        print("[+] Re-running clean flightline inference with hardened model...")
+        print("\n[Stage 3/4] Running Flightline Target Inference...")
         if PREDICTION_WORKERS > 1:
             detections = predict_parallel(
                 config_path=CONFIG_FILE,
@@ -692,19 +719,68 @@ def run_experiment_2() -> Dict[str, Any]:
                 **predict_kwargs,
             )
 
+        # -------------------------------------------------------------------------
+        # Stage 3 (Optional): Hard Negative Mining (Pass 2)
+        # -------------------------------------------------------------------------
+        if ENABLE_HARD_NEGATIVE_MINING and not PREDICT_ONLY:
+            print("\n" + "=" * 60)
+            print("⛏️  HARD NEGATIVE MINING (Pass 2 Retraining)")
+            print("=" * 60)
+            print(f"    Mining threshold : P >= {HNM_MIN_CONFIDENCE:.2f}")
+            print(f"    Exclusion buffer : {HNM_EXCLUSION_RADIUS_METERS:.0f} m from known ROIs")
+            print(f"    Negative weight  : {HNM_NEGATIVE_WEIGHT:.2f}")
+
+            # Retrain classifier with higher negative weighting
+            model.cfg["processing"]["background_negative_weight"] = HNM_NEGATIVE_WEIGHT
+            model.fit_classifier(
+                output_dir=output_dir,
+                data_path=harvest_file,
+                classifier=model.classifier_type,
+                calibration="isotonic",
+                use_dem=model.use_dem,
+                dem_weight=model.dem_weight,
+            )
+
+            # Re-run inference with hardened model
+            print("[+] Re-running clean flightline inference with hardened model...")
+            if PREDICTION_WORKERS > 1:
+                detections = predict_parallel(
+                    config_path=CONFIG_FILE,
+                    weights_path=weights_path,
+                    cfg=cfg,
+                    output_dir=output_dir,
+                    workers=PREDICTION_WORKERS,
+                    predict_kwargs=predict_kwargs,
+                    runtime_cfg=cfg.get("runtime", {}),
+                )
+            else:
+                detections = model.predict(
+                    source=cfg["paths"]["base_dir"],
+                    output_dir=output_dir,
+                    **predict_kwargs,
+                )
+
     # -------------------------------------------------------------------------
     # Stage 4: Stage-2 Patch Verification Filter
     # -------------------------------------------------------------------------
     if ENABLE_PATCH_VERIFIER and detections:
         detections = execute_stage2_patch_verification(detections, output_dir, cfg)
 
+    # Sort candidates globally according to the configured ranking policy
+    detections = sorted_candidates(detections, CANDIDATE_SORT)
+
     # Write merged summary outputs
     summary_paths = _write_candidate_exports(output_dir, detections)
     _write_top_candidate_kml(output_dir, detections, top_n=50)
+    _write_probability_tier_exports(
+        output_dir,
+        detections,
+        cfg.get("discovery", {}).get("probability_tiers"),
+    )
 
     txt_path = output_dir / "new_roi_coordinates.txt"
     with open(txt_path, "w") as f:
-        f.write("# Rank  Flight_Line  Lat  Lon  Pixels  Mean_Prob  Max_Prob  ROI_HxW  Coverage  Saliency_SNR\n")
+        f.write("# Rank  Flight_Line          Lat        Lon        Pixels  Mean_Prob  Max_Prob  ROI_HxW    Coverage  Saliency_SNR\n")
         for rank, roi in enumerate(detections, 1):
             roi_hw = f"{roi.get('roi_height_px', 0)}x{roi.get('roi_width_px', 0)}"
             snr = roi.get("saliency_snr", 0.0)

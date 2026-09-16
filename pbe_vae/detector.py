@@ -329,15 +329,26 @@ def _write_top_candidate_kml(
 ) -> Path:
     """Write top new ROI candidates as Google Earth KML point+area placemarks."""
     kml_path = output_dir / f"{stem}.kml"
-    ranked_rois = sorted(
-        rois,
-        key=lambda r: (
-            float(r.get("max_prob", 0.0)),
-            float(r.get("mean_prob", 0.0)),
-            float(r.get("validation_score", 0.0)),
-        ),
-        reverse=True,
-    )[: max(0, int(top_n))]
+    if rois and "validation_score" in rois[0]:
+        ranked_rois = sorted(
+            rois,
+            key=lambda r: (
+                float(r.get("validation_score", 0.0)),
+                float(r.get("max_prob", 0.0)),
+                float(r.get("mean_prob", 0.0)),
+            ),
+            reverse=True,
+        )[: max(0, int(top_n))]
+    else:
+        ranked_rois = sorted(
+            rois,
+            key=lambda r: (
+                float(r.get("max_prob", 0.0)),
+                float(r.get("mean_prob", 0.0)),
+                float(r.get("validation_score", 0.0)),
+            ),
+            reverse=True,
+        )[: max(0, int(top_n))]
 
     def data(name: str, value: Any) -> str:
         return (
